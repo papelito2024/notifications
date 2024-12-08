@@ -47,15 +47,32 @@ class Database {
     }
 
 
+    async select(table,fields,filter) {
+
+        try {
+
+            const keys = Object.keys(filter)
+           
+
+           const data =  await this.db.get(`SELECT *  FROM ${table} WHERE ${keys[0]}="${filter[keys[0]]}"`);
+        
+            return data
+        } catch (error) {
+            console.log(error)
+        }
+
+    }
+
     async insert(table,values){
 
         try {
             
-            const keys = Object.keys(values)
-            const vals = Object.values(values)
-           
-            await this.db.run(`INSERT INTO ${table} (${keys.join(",")}) VALUES (${vals.join(",")})`);
+            const keys = Object.keys(values).map((e)=>`"${e}"`).join(",")
+            const vals = Object.values(values).map((e) => `"${e}"`).join(",")
+         
+            await this.db.run(`INSERT INTO ${table} (${keys}) VALUES (${vals})`);
         } catch (error) {
+           
             console.log(error)
         }
        
@@ -70,6 +87,7 @@ class Database {
 
             await this.db.run(`UPDATE TABLE ${table} SET  ${this.set(set)} WHERE ${key}=${condition[key]} `);
         } catch (error) {
+            console.log(error.trace)
             console.log(error)
         }
 

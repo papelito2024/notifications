@@ -26,12 +26,19 @@ app.use(cors());
 app.use(morgan())
 
 
+
+
+
 import authRouter from './routes/auth.js';
 app.use("/auth",authRouter)
 
-app.get('/', (req, res) => {
-    res.render("index", { title: "index", message: "nose" })
+
+app.use((req, res) => {
+    res.send("nose econtro la ruta")
 });
+
+
+
 
 
 

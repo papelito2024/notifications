@@ -8,11 +8,17 @@ import AuthController from "../controllers/authController.js";
 
 const auth = new AuthController()
 
-authRouter.post("/login",(req,res)=>{
 
-    
-})
 
+authRouter.get("/login", (req, res) => res.render("login", { title: "login", message: undefined }))
+
+
+authRouter.post("/login",auth.login)
+
+
+
+
+authRouter.get("/register",(req,res)=>res.render("register",{title:"register",message:undefined}))
 
 
 authRouter.post("/register",auth.register)
