@@ -8,6 +8,8 @@ import { open } from 'sqlite';
 class Database {
     constructor(parameters) {
         this.db 
+
+        this.query
     }
 
 
@@ -71,30 +73,11 @@ class Database {
     }
 
 
-    async select(table,fields=null,filter=null,joins=null) {
+     select(table,fields=null) {
 
-        try {
+        this.query=`SELECT ${fields?? "*"} FROM ${table} `
 
-            let joinsQuery ="";
-           
-            if(joins){
-                joinsQuery=this.joins2query(joins);
-            }
-
-            const keys = Object.keys(filter)
-
-            console.log(filter)
-           
-            const query = `SELECT ${fields ?? "*"}  FROM ${table} ${joinsQuery ? joinsQuery : ""} WHERE ${keys[0]}=${filter[keys[0]]}`;
-           
-
-           const data =  await this.db.get(query);
-        
-            return data
-        } catch (error) {
-            console.log(error)
-        }
-
+        return this
     }
 
     parseJoin(join,table){
@@ -103,81 +86,160 @@ class Database {
             "inner":"INNER"
         }
 
-        return `${join.type? JOINS[join.type]: JOINS["inner"]} JOIN ${join.table} ON ${join.table}.${join.col}=${table}.id `        
+        return `${join.type ? JOINS[join.type] : JOINS["inner"]} JOIN ${join.table} ON   ${table}.${join.equal}=${join.table}.${join.col}`        
     }
 
     
-    joins2query(joins){
+    joins2query(joins,table){
 
         let joinsStr = "";
         if (Array.isArray(joins)) {
 
             joinsStr = joins.map((e) => {
-                return this.parseJoin(e)
+                return this.parseJoin(e,table)
             }).join(" ")
         }
-        return joinStr;
+        else{
+            joinsStr = this.parseJoin(joins,table)
+        }
+        console.log(joinsStr)
+        return joinsStr;
     }
     
 
-    async insert(table,values){
-
-        try {
-            
+    insert(table,values){
             const keys = Object.keys(values).map((e)=>`"${e}"`).join(",")
             const vals = Object.values(values).map((e) => `"${e}"`).join(",")
          
-            await this.db.run(`INSERT INTO ${table} (${keys}) VALUES (${vals})`);
-        } catch (error) {
-           
-            console.log(error)
-        }
+            this.query=`INSERT INTO ${table} (${keys}) VALUES (${vals})`;
+
+
+       return this
        
     }
 
 
-    async update(table,set,condition){
+    async update(table){
 
-        try {
+       
+            this.query=`UPDATE ${table} `
+      
 
-            const key = Object.keys(condition)[0]
-
-            await this.db.run(`UPDATE TABLE ${table} SET  ${this.set(set)} WHERE ${key}=${condition[key]} `);
-        } catch (error) {
-            console.log(error.trace)
-            console.log(error)
-        }
-
-
+        return this
     }
 
-   async  delete(table,condition){
-        try {
+   async  delete(table){
+ 
+     this.query=`DELETE FROM ${table} `
 
-          
-            const key = Object.keys(condition)[0]
-
-            await this.db.run(`DELETE FROM ${table} WHERE ${key}=${condition[key]} `);
-
-            
-        } catch (error) {
-            console.log(error)
-        }
+      return this
         
     }
 
-    set(set){
+    set(colums){
         
         let string =[]
 
-        for(let field in set){
+        for(let field in colums){
             
-            string.push(`${field}="${set[field]}"`)
+            string.push(`${field}='${colums[field]}'`)
         }
 
-        return string.join(",")
+        this.query += `SET ${string.join(",")} `
+
+        return this
     }
+
+    order(colum,flow="ASC"){
+
+        this.query+=`ORDER BY ${colum} ${flow} `
+        return this
+    }
+
+    limit(val){
+        this.query+=`LIMIT ${val} `
+        return this
+    }
+
+
+    skip(val) {
+        this.query += `OFFSET ${val} `
+        return this
+    }
+
+
+    where(field){
+
+        this.query+=`WHERE ${field}`
+
+        return this
+    }
+
+
+    group(colums){
+
+        this.query+=`GROUP BY ${colums.join(",")} `
+
+        return this
+    }
+
+    innerJoin(table,col,col2){
+
+        const table1 = this.query.match(/FROM\s[A-Za-z]+/)[0].split(" ")[1]
+
+       
+        this.query+=`JOIN ${table} ON ${table1}.${col}=${table}.${col2} `
+
+        return this
+    }
+
+    equal(value){
+
+        this.query += `='${value}' `
+
+        return this
+    }
+
+    in(values){
+
+        this.query+=` IN (${values.join(",")}) `
+
+        return this
+        
+    }
+
+    like(value){
+        this.query += `LIKE %${value}%`
+
+        return this
+    }
+
+
+    async execute(){
+        try {  
+
+            var query;
+             console.log(this.query)
+            if (this.query.startsWith("SELECT"))query= this.db.get(this.query);
+            else query =this.db.run(this.query)
+            
+             const data = await query
+            console.log(data) 
+           return data
+        } catch (error) {
+            console.log(error)
+        }
+        
+    }
+    
 }
 
 
-export default  new Database()
+   var db = new Database()
+
+   
+
+
+
+export default db
+

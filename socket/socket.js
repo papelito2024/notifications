@@ -21,11 +21,15 @@ io.on('connection', (socket) => {
         const notifications = new Notifications(socket, msg)
 
 
-        const res = await database.select("sockets", null, {
-            id:socket.id
+        const res = await database.select("sockets", "sockets.id ,users.username,users.id", {
+            "sockets.id":socket.id
+        },{
+            table:"users",
+            col:"id",
+            equal:"user_id"
         })
 
-        console.log(res)
+        
 
         if (!res) {
             const res = await database.insert("sockets", {
