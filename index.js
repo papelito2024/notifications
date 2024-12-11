@@ -6,6 +6,7 @@ import server from "./server.js";
 import database from "./database.js";
 
 
+
 async function dbinit(){
   await database.connect()
 
@@ -15,7 +16,7 @@ async function dbinit(){
 
 dbinit()
 
-import io from "./socket.js";
+import io from "./socket/socket.js";
 
 
 

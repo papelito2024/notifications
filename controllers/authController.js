@@ -11,19 +11,26 @@ class AuthController {
         try {
 
          
-           const user =  await database.select("users",{},{
-                username:"admin12"
+           const user =  await database.select("users",null,{
+                username:req.body.username
             })
 
-           if(!user) res.render("login",{title:"login",message:"credenciales malotas"})
+           if(!user)return  res.render("login",{title:"login",message:"credenciales malotas"})
 
             const match =  await  bcrypt.compare("putita12",user.password)
 
-            if (!match) res.render("login", { title: "login", message: "credenciales malotas" })
+            if (!match) return  res.render("login", { title: "login", message: "credenciales malotas" })
                 
+            console.log(user)
 
-            res.render("login", { status: "registerd", message: "usuario loggeadoo exitosamente" })
+            req.session.user={
+                username:user.username,
+                id:user.id
+            }
 
+            console.log(req.session.user)
+           
+            res.redirect("/")
         } catch (error) {
             console.log(error)
             res.render("login", { message: "error guachiing jeje" })
@@ -39,10 +46,11 @@ class AuthController {
         const hash = await bcrypt.hash("putita12",salt)
 
         await database.insert("users", {
-            username: "user233",
+            username: req.body.username,
             password: hash
         })
 
+        
      
 
         res.render("register", { status: "registerd", message: "usuario registrado exitosamente" })

@@ -9,10 +9,12 @@
 </head>
 
 <body>
+
+
     <h1>
         <%= message %>
     </h1>
-
+    <a href="http://localhost:3000/auth/salir">logout</a>
     <button >
         disconnect
     </button>
@@ -23,11 +25,14 @@
 
 
   const button =  document.getElementsByTagName("button")[0].addEventListener("click",(e)=>{
-    alert("asdasds")
+   
 
     console.log(socket)
 
-    socket.emit("message","gils")
+    socket.emit("message",{
+        user_id:2
+    })
+
   },false)
 </script>ss
 </body>

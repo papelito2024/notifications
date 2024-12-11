@@ -36,9 +36,33 @@ class Database {
             username TEXT UNIQUE,
             password TEXT
             
+            
         )
 
         `);
+
+         await this.db.exec(`
+         CREATE TABLE IF NOT EXISTS sockets (
+            id TEXT PRIMARY KEY ,
+            user_id INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+
+        `);
+
+         await this.db.exec(`
+         CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT DEFAULT "SYSTEM",
+            description TEXT,
+            user_id INTEGER,
+            status INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES users (id)   
+        )
+
+        `);
+
+      
 
           //  console.log(r)
       } catch (error) {
@@ -47,14 +71,24 @@ class Database {
     }
 
 
-    async select(table,fields,filter) {
+    async select(table,fields=null,filter=null,joins=null) {
 
         try {
 
+            let joinsQuery ="";
+           
+            if(joins){
+                joinsQuery=this.joins2query(joins);
+            }
+
             const keys = Object.keys(filter)
+
+            console.log(filter)
+           
+            const query = `SELECT ${fields ?? "*"}  FROM ${table} ${joinsQuery ? joinsQuery : ""} WHERE ${keys[0]}=${filter[keys[0]]}`;
            
 
-           const data =  await this.db.get(`SELECT *  FROM ${table} WHERE ${keys[0]}="${filter[keys[0]]}"`);
+           const data =  await this.db.get(query);
         
             return data
         } catch (error) {
@@ -62,6 +96,29 @@ class Database {
         }
 
     }
+
+    parseJoin(join,table){
+
+        const JOINS={
+            "inner":"INNER"
+        }
+
+        return `${join.type? JOINS[join.type]: JOINS["inner"]} JOIN ${join.table} ON ${join.table}.${join.col}=${table}.id `        
+    }
+
+    
+    joins2query(joins){
+
+        let joinsStr = "";
+        if (Array.isArray(joins)) {
+
+            joinsStr = joins.map((e) => {
+                return this.parseJoin(e)
+            }).join(" ")
+        }
+        return joinStr;
+    }
+    
 
     async insert(table,values){
 
